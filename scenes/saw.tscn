@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://e1axh7e0yjrr"]
+
+[ext_resource type="Script" path="res://scripts/saw.gd" id="1_kj7tb"]
+
+[node name="Saw" type="Node2D"]
+script = ExtResource("1_kj7tb")
+
+[node name="Sprite" type="Sprite2D" parent="."]

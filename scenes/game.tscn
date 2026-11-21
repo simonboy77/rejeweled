@@ -1,0 +1,65 @@
+[gd_scene load_steps=4 format=3 uid="uid://bkvcr8ksxqtgo"]
+
+[ext_resource type="Script" path="res://scripts/game.gd" id="1_fcdgp"]
+[ext_resource type="FontFile" uid="uid://dvfvphxbqj1nd" path="res://fonts/Wash Your Hand.ttf" id="2_sgldu"]
+[ext_resource type="Theme" uid="uid://dp8iu8rsgc7xt" path="res://themes/main.tres" id="3_vewu8"]
+
+[node name="Game" type="Node2D"]
+script = ExtResource("1_fcdgp")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 1400.0
+offset_bottom = 2800.0
+color = Color(1, 0.823529, 0.909804, 1)
+
+[node name="Btn_Clear" type="Button" parent="."]
+offset_left = 39.0
+offset_top = 2458.0
+offset_right = 679.0
+offset_bottom = 2758.0
+focus_mode = 0
+theme_override_fonts/font = ExtResource("2_sgldu")
+theme_override_font_sizes/font_size = 100
+text = "Clear"
+
+[node name="Btn_Shuffle" type="Button" parent="."]
+offset_left = 721.0
+offset_top = 2458.0
+offset_right = 1361.0
+offset_bottom = 2758.0
+theme_override_fonts/font = ExtResource("2_sgldu")
+theme_override_font_sizes/font_size = 100
+text = "Shuffle"
+
+[node name="Btn_Test" type="Button" parent="."]
+offset_left = 765.0
+offset_top = 2139.0
+offset_right = 1288.0
+offset_bottom = 2409.0
+theme = ExtResource("3_vewu8")
+text = "Test"
+
+[node name="Lbl_Score" type="Label" parent="."]
+offset_top = 250.0
+offset_right = 1400.0
+offset_bottom = 530.0
+theme_override_constants/outline_size = 20
+theme_override_fonts/font = ExtResource("2_sgldu")
+theme_override_font_sizes/font_size = 300
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Lbl_Refresh" type="Label" parent="."]
+offset_top = 1260.0
+offset_right = 1400.0
+offset_bottom = 1540.0
+theme_override_constants/outline_size = 20
+theme_override_fonts/font = ExtResource("2_sgldu")
+theme_override_font_sizes/font_size = 200
+text = "Refresh!"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="pressed" from="Btn_Clear" to="." method="_on_btn_clear_pressed"]
+[connection signal="pressed" from="Btn_Shuffle" to="." method="_on_btn_shuffle_pressed"]

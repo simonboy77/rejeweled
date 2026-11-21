@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://cikllwd38eqr"]
+
+[ext_resource type="Script" path="res://scripts/block.gd" id="1_6w3sw"]
+
+[node name="Block" type="Node2D"]
+script = ExtResource("1_6w3sw")
+
+[node name="Sprite" type="Sprite2D" parent="."]

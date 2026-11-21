@@ -1,0 +1,255 @@
+func group_adjacent_blocks(blockIndex, matchType, comboIndex, comboList):
+	var block = blocks[blockIndex]
+	var blockType = block.blockType
+	
+	if block.inCombo && (block.comboIndex == -1) && Globals.blocks_match(blockType, matchType):
+		block.comboIndex = comboIndex
+		comboList.append(blockIndex)
+		
+		if Globals.block_is_rainbow(matchType):
+			matchType = blockType
+	
+		if Grid.has_left_index(blockIndex):
+			group_adjacent_blocks(Grid.get_left_index(blockIndex), matchType, comboIndex, comboList)
+		
+		if Grid.has_above_index(blockIndex):
+			group_adjacent_blocks(Grid.get_above_index(blockIndex), matchType, comboIndex, comboList)
+		
+		if Grid.has_right_index(blockIndex):
+			group_adjacent_blocks(Grid.get_right_index(blockIndex), matchType, comboIndex, comboList)
+		
+		if Grid.has_below_index(blockIndex):
+			group_adjacent_blocks(Grid.get_below_index(blockIndex), matchType, comboIndex, comboList)
+		
+		return true
+	
+	return false
+
+
+func get_all_combos():
+	# Check for all horizontal combos
+	for row in Grid.get_rows():
+		for col in (Grid.get_cols() - 2): # don't check last two columns
+			var matchCount = 1
+			var blockIndex = Grid.index_from_coor(Vector2(col, row))
+			if !blocks[blockIndex].is_empty():
+				var matchType = blocks[blockIndex].blockType
+				for nextCol in range(col + 1, Grid.get_cols()):
+					var nextType = blocks[Grid.index_from_coor(Vector2(nextCol, row))].blockType
+					if Globals.blocks_match(nextType, matchType):
+						matchCount += 1
+						if Globals.block_is_rainbow(matchType): matchType = nextType
+					else:
+						break
+			
+			if matchCount >= 3:
+				for offset in matchCount:
+					var offsetIndex = blockIndex + offset
+					blocks[offsetIndex].inCombo = true
+
+	# Check for all vertical combos
+	for col in Grid.get_cols():
+		for row in (Grid.get_rows() - 2): # don't check last two rows
+			var matchCount = 1
+			var blockIndex = Grid.index_from_coor(Vector2(col, row))
+			if !blocks[blockIndex].is_empty():
+				var matchType = blocks[blockIndex].blockType
+				for nextRow in range(row + 1, Grid.get_rows()):
+					var nextType = blocks[Grid.index_from_coor(Vector2(col, nextRow))].blockType
+					if Globals.blocks_match(nextType, matchType):
+						matchCount += 1
+						if Globals.block_is_rainbow(matchType): matchType = nextType
+					else:
+						break
+			
+			if matchCount >= 3:
+				for offset in matchCount:
+					var offsetIndex = blockIndex + (offset * Grid.get_cols())
+					blocks[offsetIndex].inCombo = true
+	
+	for row in (Grid.get_rows() - 1): # don't check last row
+		for col in (Grid.get_cols() - 1): # don't check last column
+			var blockIndex = Grid.index_from_coor(Vector2(col, row))
+			if !blocks[blockIndex].is_empty():
+				var rightIndex = Grid.get_right_index(blockIndex)
+				var belowIndex = Grid.get_below_index(blockIndex)
+				var cornerIndex = Grid.get_below_index(Grid.get_right_index(blockIndex))
+				
+				var matchType = blocks[blockIndex].blockType
+				var rightType = blocks[rightIndex].blockType
+				var belowType = blocks[belowIndex].blockType
+				var cornerType = blocks[cornerIndex].blockType
+				
+				if Globals.blocks_match_4(matchType, rightType, belowType, cornerType):
+					blocks[blockIndex].inCombo = true; blocks[rightIndex].inCombo = true
+					blocks[belowIndex].inCombo = true; blocks[cornerIndex].inCombo = true
+	
+	# Group adjacent inCombo blocks together
+	var comboList = [] # contains array of blockIndexes of the corresponding index
+	for row in Grid.get_rows():
+		for col in Grid.get_cols():
+			var blockIndex = Grid.index_from_coor(Vector2(col, row))
+			var blockType = blocks[blockIndex].blockType
+			var comboBlockIndexList = [] # stores indexes of all blocks in combo
+			if group_adjacent_blocks(blockIndex, blockType, comboList.size(), comboBlockIndexList):
+				comboList.append(comboBlockIndexList)
+	
+	return comboList
+
+
+
+func overview_block_is_in_combo(blockIndex):
+	var matchType = blocksOverview[blockIndex]
+	
+	var leftIndex      = Grid.get_left_index( blockIndex); var aboveIndex      = Grid.get_above_index(blockIndex)
+	var rightIndex     = Grid.get_right_index(blockIndex); var belowIndex      = Grid.get_below_index(blockIndex)
+	var leftAboveIndex = Grid.get_left_index( aboveIndex); var rightAboveIndex = Grid.get_right_index(aboveIndex)
+	var leftBelowIndex = Grid.get_left_index( belowIndex); var rightBelowIndex = Grid.get_right_index(belowIndex)
+	
+	var leftType  = blocksOverview[ leftIndex] if Grid.has_index( leftIndex) else Globals.BLOCK_EMPTY
+	var aboveType = blocksOverview[aboveIndex] if Grid.has_index(aboveIndex) else Globals.BLOCK_EMPTY
+	var rightType = blocksOverview[rightIndex] if Grid.has_index(rightIndex) else Globals.BLOCK_EMPTY
+	var belowType = blocksOverview[belowIndex] if Grid.has_index(belowIndex) else Globals.BLOCK_EMPTY
+	
+	var leftAboveType  = blocksOverview[ leftAboveIndex] if Grid.has_index( leftAboveIndex) else Globals.BLOCK_EMPTY
+	var leftBelowType  = blocksOverview[ leftBelowIndex] if Grid.has_index( leftBelowIndex) else Globals.BLOCK_EMPTY
+	var rightAboveType = blocksOverview[rightAboveIndex] if Grid.has_index(rightAboveIndex) else Globals.BLOCK_EMPTY
+	var rightBelowType = blocksOverview[rightBelowIndex] if Grid.has_index(rightBelowIndex) else Globals.BLOCK_EMPTY
+
+	# check left row
+	if !Globals.block_is_empty(leftType):
+		if Grid.has_left_index(Grid.get_left_index(blockIndex)):
+			var farLeftType = blocksOverview[Grid.get_left_index(Grid.get_left_index(blockIndex))]
+			if Globals.blocks_match_3(matchType, leftType, farLeftType): return true
+	
+	# check above column
+	if !Globals.block_is_empty(aboveType):
+		if Grid.has_above_index(Grid.get_above_index(blockIndex)):
+			var farAboveType = blocksOverview[Grid.get_above_index(Grid.get_above_index(blockIndex))]
+			if Globals.blocks_match_3(matchType, aboveType, farAboveType): return true
+	
+	# check right row
+	if !Globals.block_is_empty(rightType):
+		if Grid.has_right_index(Grid.get_right_index(blockIndex)):
+			var farRightType = blocksOverview[Grid.get_right_index(Grid.get_right_index(blockIndex))]
+			if Globals.blocks_match_3(matchType, rightType, farRightType): return true
+	
+	# check below column
+	if !Globals.block_is_empty(belowType):
+		if Grid.has_below_index(Grid.get_below_index(blockIndex)):
+			var farBelowType = blocksOverview[Grid.get_below_index(Grid.get_below_index(blockIndex))]
+			if Globals.blocks_match_3(matchType, belowType, farBelowType): return true
+	
+	# check plus rows from middle
+	if Globals.blocks_match_3(matchType, leftType, rightType):  return true
+	if Globals.blocks_match_3(matchType, aboveType, belowType): return true
+	
+	# check 2x2 areas
+	if Globals.blocks_match_4(matchType,  leftType, aboveType,  leftAboveType): return true
+	if Globals.blocks_match_4(matchType, rightType, aboveType, rightAboveType): return true
+	if Globals.blocks_match_4(matchType, rightType, belowType, rightBelowType): return true
+	if Globals.blocks_match_4(matchType,  leftType, belowType,  leftBelowType): return true
+
+	return false
+
+
+func calc_connected_empty_blocks():
+	var connectedEmptyBlocks = []
+	connectedEmptyBlocks.resize(blocks.size())
+	connectedEmptyBlocks.fill(0)
+	
+	# fill connectedEmtyBlocks
+	for blockIndex in blocks.size():
+		var block = blocks[blockIndex]
+		if block.is_empty():
+			var path = blockPaths[blockIndex]
+			var stepIndex = blockIndex
+			
+			for pathIndex in (path.size() - 1): # last step is the one to the top
+				match path[pathIndex]:
+					Globals.DIR_LEFT:  stepIndex = Grid.get_left_index( stepIndex)
+					Globals.DIR_ABOVE: stepIndex = Grid.get_above_index(stepIndex)
+					Globals.DIR_RIGHT: stepIndex = Grid.get_right_index(stepIndex)
+					Globals.DIR_BELOW: stepIndex = Grid.get_below_index(stepIndex)
+				
+				connectedEmptyBlocks[stepIndex] += 1
+	
+	return connectedEmptyBlocks
+
+func fill_empty_slots_2():
+	# create a list where the first index corresponds to the blockIndex with the longest
+	# path to the top of the board.
+	# TODO: this can be done at load_level!
+	
+	
+	
+	var connectedEmptyBlocks = calc_connected_empty_blocks()
+
+	# move blocks
+	for blockIndex in blocks.size():
+		var block = blocks[blockIndex]
+		if block.can_swap() && connectedEmptyBlocks[blockIndex] && !block.is_busy():
+			#dont forget to adjust the connected emptyblocks accordingly
+			
+			# below has priority
+			if Grid.has_below_index(blockIndex):
+				var belowIndex = Grid.get_below_index(blockIndex)
+				if blocks[belowIndex].is_empty():
+					swap_blocks(blockIndex, belowIndex)
+					connectedEmptyBlocks = calc_connected_empty_blocks()
+				elif connectedEmptyBlocks[belowIndex]:
+					continue # this direction has priority but is handled later
+					
+			var hasLeft  = Grid.has_left_index(blockIndex)
+			var hasRight = Grid.has_right_index(blockIndex)
+			
+			if hasLeft && hasRight:
+				var leftIndex = Grid.get_left_index(blockIndex)
+				var rightIndex = Grid.get_right_index(blockIndex)
+				
+				var leftEmpty = blocks[leftIndex].is_empty()
+				var rightEmpty = blocks[rightIndex].is_empty()
+				var leftConnectedEmpty = connectedEmptyBlocks[leftIndex]
+				var rightConnectedEmpty = connectedEmptyBlocks[rightIndex]
+				
+				if leftEmpty && rightEmpty:
+					if leftConnectedEmpty <= rightConnectedEmpty:
+						swap_blocks(blockIndex, leftIndex)
+						connectedEmptyBlocks = calc_connected_empty_blocks()
+					else:
+						swap_blocks(blockIndex, rightIndex)
+						connectedEmptyBlocks = calc_connected_empty_blocks()
+				elif leftEmpty && (leftConnectedEmpty <= rightConnectedEmpty):
+					swap_blocks(blockIndex, leftIndex)
+					connectedEmptyBlocks = calc_connected_empty_blocks()
+				elif rightEmpty && (leftConnectedEmpty > rightConnectedEmpty):
+					swap_blocks(blockIndex, rightIndex)
+					connectedEmptyBlocks = calc_connected_empty_blocks()
+			elif hasLeft:
+				var leftIndex = Grid.get_left_index(blockIndex)
+				if blocks[leftIndex].is_empty():
+					swap_blocks(blockIndex, leftIndex)
+					connectedEmptyBlocks = calc_connected_empty_blocks()
+			elif hasRight:
+				var rightIndex = Grid.get_right_index(blockIndex)
+				if blocks[rightIndex].is_empty():
+					swap_blocks(blockIndex, rightIndex)
+					connectedEmptyBlocks = calc_connected_empty_blocks()
+			
+			if Grid.has_above_index(blockIndex):
+				var aboveIndex = Grid.get_above_index(blockIndex)
+				if blocks[aboveIndex].is_empty():
+					swap_blocks(blockIndex, aboveIndex)
+					connectedEmptyBlocks = calc_connected_empty_blocks()
+			
+			# if it is empty and has no connectedEmptyBlocks, than fill it and leave it
+			
+			# in left/right situation, go to the side with the smallest path?
+			# if only above left, go above babyyyy
+		elif block.is_empty() && Grid.coor_from_index(blockIndex).y == 0:
+			var abovePos = Grid.screen_pos_from_index(Grid.get_above_index(blockIndex))
+			var goalPos = Grid.screen_pos_from_index(blockIndex)
+			
+			block.set_global_position(abovePos)
+			block.random_type()
+			block.start_move(goalPos, block.z_index)
